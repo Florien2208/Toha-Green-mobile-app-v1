@@ -9,7 +9,7 @@ const UserProfile = () => {
           style={styles.profileImage}
           source={{ uri: "https://via.placeholder.com/150" }}
         />
-        <Text style={styles.name}>John Doe</Text>
+        <Text style={styles.name}>John Dosdffhgjmhe</Text>
         <Text style={styles.bio}>
           Software Developer | React Native Enthusiast
         </Text>

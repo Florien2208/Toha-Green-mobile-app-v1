@@ -16,7 +16,7 @@ export default function TabTwoScreen() {
       }
     >
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
+        <ThemedText type="title">dj flo</ThemedText>
       </ThemedView>
       <ThemedText>
         This app includes example code to help you get started.
