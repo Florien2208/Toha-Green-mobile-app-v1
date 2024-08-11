@@ -4,7 +4,7 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import "react-native-reanimated";
@@ -18,6 +18,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
@@ -39,13 +40,13 @@ export default function RootLayout() {
           name="(tabs)"
           options={{
             headerShown: true,
-            title: "", 
+            title: "",
             headerStyle: {
-              backgroundColor: colorScheme === "dark" ? "#000" : "#fff", 
+              backgroundColor: colorScheme === "dark" ? "#000" : "#fff",
             },
             headerTintColor: colorScheme === "dark" ? "#fff" : "#000",
             headerTitleStyle: {
-              fontWeight: "bold", 
+              fontWeight: "bold",
             },
             headerTitle: () => (
               <View
@@ -58,7 +59,7 @@ export default function RootLayout() {
                     marginRight: 10,
                   }}
                 >
-                 My Toha
+                  My Toha
                 </Text>
                 <TextInput
                   placeholder="Search"
@@ -66,7 +67,7 @@ export default function RootLayout() {
                     colorScheme === "dark" ? "#ccc" : "#888"
                   }
                   style={{
-                    width:190,
+                    width: 190,
                     height: 30,
                     backgroundColor:
                       colorScheme === "dark" ? "#333" : "#f0f0f0",
@@ -79,9 +80,7 @@ export default function RootLayout() {
             ),
             headerRight: () => (
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <TouchableOpacity
-                  onPress={() => alert("Notification Icon Pressed")}
-                >
+                <TouchableOpacity onPress={() => router.push("/pages/login")}>
                   <Ionicons
                     name="notifications-outline"
                     size={24}
@@ -89,7 +88,7 @@ export default function RootLayout() {
                     style={{ marginRight: 15 }}
                   />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => alert("Profile Icon Pressed")}>
+                <TouchableOpacity onPress={() => router.push("/pages/signup")}>
                   <FontAwesome
                     name="user"
                     size={24}
@@ -101,6 +100,8 @@ export default function RootLayout() {
             ),
           }}
         />
+        <Stack.Screen name="pages/signup" options={{ presentation: "modal" }} />
+        <Stack.Screen name="pages/login" options={{ presentation: "modal" }} />
         <Stack.Screen name="+not-found" />
       </Stack>
     </ThemeProvider>
