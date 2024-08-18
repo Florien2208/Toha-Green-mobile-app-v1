@@ -57,7 +57,7 @@ const LoginPage = () => {
       setLoading(true);
       console.log(email, "and", password);
       try {
-        const response = await axios.post("http://localhost:8000/auth/login", {
+        const response = await axios.post("/auth/login", {
           email,
           password,
         });
@@ -183,12 +183,13 @@ const LoginPage = () => {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity>
-            <Text style={styles.createAccountText}>
-              Don't have an account?{" "}
+          <Text style={styles.createAccountText}>
+            Don't have an account?{" "}
+            <TouchableOpacity onPress={() => router.push("/pages/signup")}>
+              
               <Text style={styles.createAccountLink}>Create New Account</Text>
-            </Text>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          </Text>
         </View>
       </ImageBackground>
     </View>

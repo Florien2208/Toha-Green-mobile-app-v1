@@ -130,7 +130,7 @@ useEffect(() => {
             options={{ presentation: "modal", headerShown: false }}
           />
         )}
-        <Stack.Screen name="pages/signup" options={{ presentation: "modal" }} />
+        <Stack.Screen name="pages/signup" options={{ presentation: "modal" ,headerShown:false}} />
         {/* <Stack.Screen name="pages/login" options={{ presentation: "modal" }} /> */}
         <Stack.Screen name="+not-found" />
       </Stack>

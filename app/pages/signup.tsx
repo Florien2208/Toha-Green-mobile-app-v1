@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useRouter } from "expo-router";
 import {
   View,
   Text,
@@ -8,16 +9,101 @@ import {
   StyleSheet,
   ScrollView,
 } from "react-native";
+import axios from "axios";
+
+
+type Errors = {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  country?: string;
+  password?: string;
+  confirmPassword?: string;
+};
 
 const SignUpPage = () => {
-  const [firsName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [place, setPlace] = useState("");
-  const [email, setEmail] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const router = useRouter();
+  const [firstName, setFirstName] = useState<string>("");
+  const [lastName, setLastName] = useState<string>("");
+  const [country, setPlace] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [phone, setPhoneNumber] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
 
+  const [errors, setErrors] = useState<Errors>({});
+
+  const validate = (): boolean => {
+    let valid = true;
+    const errors: Errors = {};
+
+    if (!firstName) {
+      errors.firstName = "First name is required";
+      valid = false;
+    }
+    if (!lastName) {
+      errors.lastName = "Last name is required";
+      valid = false;
+    }
+    if (!email) {
+      errors.email = "Email is required";
+      valid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      errors.email = "Email is invalid";
+      valid = false;
+    }
+    if (!phone) {
+      errors.phone = "Phone number is required";
+      valid = false;
+    }
+    if (!country) {
+      errors.country = "Place is required";
+      valid = false;
+    }
+    if (!password) {
+      errors.password = "Password is required";
+      valid = false;
+    }
+    if (password !== confirmPassword) {
+      errors.confirmPassword = "Passwords do not match";
+      valid = false;
+    }
+
+    setErrors(errors);
+    return valid;
+  };
+
+  const handleSubmit = async () => {
+    if (!validate()) return;
+
+    try {
+      const response = await axios.post("http://localhost:8000/users/signup", {
+        firstName,
+        lastName,
+        email,
+        phone,
+        country,
+        password,
+      });
+      console.log("Signup successful:", response.data);
+       setFirstName("");
+    setLastName("");
+    setEmail("");
+    setPhoneNumber("");
+    setPlace("");
+    setPassword("");
+    setConfirmPassword("");
+    setErrors({});
+      router.push("/pages/login");
+    } catch (error: any) {
+  if (error.response) {
+    console.error("Signup error:", error.response.data);
+  } else {
+    console.error("Signup error:", error);
+  }
+  };
+  }
   return (
     <ScrollView style={styles.container}>
       <Image
@@ -31,52 +117,67 @@ const SignUpPage = () => {
 
           <Text style={styles.label}>First Name</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, errors.firstName ? { borderColor: "red" } : undefined]}
             placeholder="E.g. sibos"
-            value={firsName}
+            value={firstName}
             onChangeText={setFirstName}
           />
+          {errors.firstName && (
+            <Text style={styles.errorText}>{errors.firstName}</Text>
+          )}
           <Text style={styles.label}>Last Name</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, errors.lastName ? { borderColor: "red" } : undefined]}
             placeholder="E.g. vidas"
             value={lastName}
             onChangeText={setLastName}
           />
-
-          <Text style={styles.label}>Place</Text>
-          <View style={styles.selectContainer}>
-            <TextInput
-              style={styles.selectInput}
-              placeholder="Select"
-              value={place}
-              onChangeText={setPlace}
-            />
-            <Text style={styles.selectArrow}>▼</Text>
-          </View>
+          {errors.lastName && (
+            <Text style={styles.errorText}>{errors.lastName}</Text>
+          )}
 
           <Text style={styles.label}>Email Address</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, errors.email ? { borderColor: "red" } : undefined]}
             placeholder="user@mail.com"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
           />
+          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
           <Text style={styles.label}>Phone Number</Text>
           <TextInput
-            style={styles.input}
+             style={[styles.input, errors.phone ? { borderColor: "red" } : undefined]}
             placeholder="+250 721 234 568"
-            value={phoneNumber}
+            value={phone}
             onChangeText={setPhoneNumber}
             keyboardType="phone-pad"
           />
-
+          {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
+          <Text style={styles.label}>Place</Text>
+          <View style={styles.selectContainer}>
+            <TextInput
+              style={[
+                styles.selectInput,
+                errors.country ? { borderColor: "red" }:undefined
+              ]}
+              placeholder="Select"
+              value={country}
+              onChangeText={setPlace}
+            />
+            <Text style={styles.selectArrow}>▼</Text>
+          </View>
+          {errors.country && (
+            <Text style={styles.errorText}>{errors.country}</Text>
+          )}
           <Text style={styles.label}>Password</Text>
           <View style={styles.passwordContainer}>
             <TextInput
-              style={styles.passwordInput}
+              style={[
+                styles.passwordInput,
+                errors.password ?{ borderColor: "red" }:undefined
+              ]}
               placeholder="Enter Password"
               value={password}
               onChangeText={setPassword}
@@ -86,11 +187,16 @@ const SignUpPage = () => {
               <Text>👁</Text>
             </TouchableOpacity>
           </View>
-
+          {errors.password && (
+            <Text style={styles.errorText}>{errors.password}</Text>
+          )}
           <Text style={styles.label}>Confirm Password</Text>
           <View style={styles.passwordContainer}>
             <TextInput
-              style={styles.passwordInput}
+              style={[
+                styles.passwordInput,
+                errors.confirmPassword ? { borderColor: "red" }: undefined
+              ]}
               placeholder="Enter Password"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
@@ -100,8 +206,10 @@ const SignUpPage = () => {
               <Text>👁</Text>
             </TouchableOpacity>
           </View>
-
-          <TouchableOpacity style={styles.button}>
+          {errors.confirmPassword && (
+            <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+          )}
+          <TouchableOpacity style={styles.button} onPress={handleSubmit}>
             <Text style={styles.buttonText}>CREATE ACCOUNT NOW</Text>
           </TouchableOpacity>
 
@@ -124,12 +232,12 @@ const SignUpPage = () => {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity>
-            <Text style={styles.loginText}>
-              Already have an account?{" "}
+          <Text style={styles.loginText}>
+            Already have an account?{" "}
+            <TouchableOpacity onPress={() => router.push("/pages/login")}>
               <Text style={styles.loginNow}>Login Now</Text>
-            </Text>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          </Text>
         </View>
       </View>
     </ScrollView>
@@ -139,6 +247,10 @@ const SignUpPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  errorText: {
+    color: "red",
+    marginBottom: 10,
   },
   backgroundImage: {
     ...StyleSheet.absoluteFillObject,
