@@ -7,11 +7,88 @@ import {
   Image,
   StyleSheet,
   ImageBackground,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
+import axios from "axios";
+import * as SecureStore from "expo-secure-store";
+import { useRouter } from "expo-router";
 
+interface FormErrors {
+  email?: string;
+  password?: string;
+}
 const LoginPage = () => {
-  const [username, setUsername] = useState("");
+  const [email, setUserEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const router = useRouter();
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    // Email validation
+    if (!email.trim()) {
+      newErrors.email = "";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    // Password validation
+    if (!password) {
+      newErrors.password = "";
+    } else if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters long";}
+    // } else if (
+    //   !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(
+    //     password
+    //   )
+    // ) {
+    //   newErrors.password =
+    //     "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character";
+    // }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+  const handleLogin = async () => {
+    if (validateForm()) {
+      setLoading(true);
+      console.log(email, "and", password);
+      try {
+        const response = await axios.post("http://localhost:8000/auth/login", {
+          email,
+          password,
+        });
+
+        const data = response.data;
+        console.log("data--", data);
+        if (response.status === 200) {
+          // Save access token and user data securely
+          await SecureStore.setItemAsync("accessToken", data.token);
+          await SecureStore.setItemAsync("userData", JSON.stringify(data.user));
+
+          // Redirect to the home page
+          router.push("(tabs)");
+        } else {
+          Alert.alert("Login Failed", data.message || "Invalid credentials");
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          Alert.alert(
+            "Error",
+            error.message || "Something went wrong. Please try again."
+          );
+        } else {
+          Alert.alert("Error", "An unknown error occurred. Please try again.");
+        }
+        console.log("error", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -25,11 +102,24 @@ const LoginPage = () => {
 
           <Text style={styles.label}>User Name</Text>
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              (errors.email === "" || !email) && styles.inputError,
+            ]}
             placeholder="Email / Phone Number"
-            value={username}
-            onChangeText={setUsername}
+            value={email}
+            onChangeText={(text) => {
+              setUserEmail(text);
+              if (text.length > 0) {
+                setErrors((prev) => ({ ...prev, email: undefined }));
+              } else {
+                setErrors((prev) => ({ ...prev, email: "" }));
+              }
+            }}
           />
+          {errors.email && errors.email !== "" && (
+            <Text style={styles.errorText}>{errors.email}</Text>
+          )}
 
           <View style={styles.passwordContainer}>
             <Text style={styles.label}>Password</Text>
@@ -39,19 +129,39 @@ const LoginPage = () => {
           </View>
           <View style={styles.passwordInputContainer}>
             <TextInput
-              style={styles.passwordInput}
+              style={[
+                styles.passwordInput,
+                (errors.password === "" || !password) && styles.inputError,
+              ]}
               placeholder="Enter Password"
               secureTextEntry
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (text.length > 0) {
+                  setErrors((prev) => ({ ...prev, password: undefined }));
+                } else {
+                  setErrors((prev) => ({ ...prev, password: "" }));
+                }
+              }}
             />
             <TouchableOpacity style={styles.eyeIcon}>
               <Text>👁</Text>
             </TouchableOpacity>
           </View>
-
-          <TouchableOpacity style={styles.loginButton}>
-            <Text style={styles.loginButtonText}>LOGIN NOW</Text>
+          {errors.password && errors.password !== "" && (
+            <Text style={styles.errorText}>{errors.password}</Text>
+          )}
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.loginButtonText}>LOGIN NOW</Text>
+            )}
           </TouchableOpacity>
 
           <Text style={styles.orText}>Or login using</Text>
@@ -84,7 +194,6 @@ const LoginPage = () => {
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -102,6 +211,11 @@ const styles = StyleSheet.create({
     top: 40,
     left: 20,
   },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginBottom: 10,
+  },
   card: {
     backgroundColor: "white",
     borderRadius: 10,
@@ -112,7 +226,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
-    height:"70%",
+    height: "70%",
   },
   title: {
     fontSize: 24,
@@ -131,6 +245,9 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 15,
   },
+  inputError: {
+    borderColor: "red",
+  },
   passwordContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -148,6 +265,7 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     borderRadius: 5,
     marginBottom: 20,
+    paddingRight: 10, // Added padding to align with email input
   },
   passwordInput: {
     flex: 1,
