@@ -1,24 +1,28 @@
+// app/(tabs)/_layout.tsx
 import { Tabs } from "expo-router";
 import React from "react";
 import { View, TextInput, TouchableOpacity, Text } from "react-native";
 import { Ionicons, FontAwesome } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-
+import { useRouter, Redirect } from "expo-router";
 import { TabBarIcon } from "@/components/navigation/TabBarIcon";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useAuth } from "../_layout";
-// import { useAuth } from "./_layout"; // Import the auth context
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const router = useRouter();
-  const { signOut } = useAuth(); // Get the signOut function from auth context
+  const { signOut, isAuthenticated } = useAuth();
 
   const handleLogout = async () => {
     await signOut();
     router.replace("/(auth)/login");
   };
+
+  // Handle authentication check at the layout level
+  if (isAuthenticated) {
+    return <Redirect href="/(auth)/login" />;
+  }
 
   return (
     <Tabs

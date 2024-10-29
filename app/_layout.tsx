@@ -4,26 +4,16 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import {
-  router,
-  Stack,
-  useRouter,
-  useSegments,
-  useRootNavigationState,
-} from "expo-router";
+import { Stack, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import "react-native-reanimated";
 import { View, ActivityIndicator } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
 import { useColorScheme } from "@/hooks/useColorScheme";
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
-
-// Create a context to manage auth state globally
 import { createContext, useContext } from "react";
+
+SplashScreen.preventAutoHideAsync();
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -41,33 +31,56 @@ export function useAuth() {
   return context;
 }
 
-// Authentication provider component
 function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const rootSegments = useSegments();
-  const navigationState = useRootNavigationState();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const segments = useSegments();
+
+  // Check initial auth state
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      const token = await AsyncStorage.getItem("userToken");
+      setIsAuthenticated(!!token);
+    } catch (error) {
+      console.error("Error checking auth status:", error);
+      setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const signIn = async (token: string) => {
-    await AsyncStorage.setItem("userToken", token);
-    setIsAuthenticated(true);
+    try {
+      await AsyncStorage.setItem("userToken", token);
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error("Error during sign in:", error);
+      throw error;
+    }
   };
 
   const signOut = async () => {
-    await AsyncStorage.removeItem("userToken");
-    setIsAuthenticated(false);
+    try {
+      await AsyncStorage.removeItem("userToken");
+      setIsAuthenticated(false);
+    } catch (error) {
+      console.error("Error during sign out:", error);
+      throw error;
+    }
   };
 
-  useEffect(() => {
-    if (!navigationState?.key) return;
-
-    const inAuthGroup = rootSegments[0] === "(auth)";
-
-    if (isAuthenticated && inAuthGroup) {
-      router.replace("/(tabs)");
-    } else if (!isAuthenticated && !inAuthGroup) {
-      router.replace("/(auth)/login");
-    }
-  }, [isAuthenticated, rootSegments, navigationState?.key]);
+  // Show loading screen while checking auth status
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, signIn, signOut }}>
@@ -81,32 +94,14 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    async function checkInitialAuth() {
-      try {
-        const token = await AsyncStorage.getItem("userToken");
-        if (token) {
-          router.replace("/(tabs)");
-        } else {
-          router.replace("/(auth)/login");
-        }
-      } catch (error) {
-        console.error("Error checking initial auth:", error);
-        router.replace("/(auth)/login");
-      } finally {
-        setIsLoading(false);
-        SplashScreen.hideAsync();
-      }
-    }
-
     if (loaded) {
-      checkInitialAuth();
+      SplashScreen.hideAsync();
     }
   }, [loaded]);
 
-  if (!loaded || isLoading) {
+  if (!loaded) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator size="large" />
@@ -123,21 +118,18 @@ export default function RootLayout() {
             name="(auth)/login"
             options={{
               headerShown: false,
+              // Prevent going back to auth screens once logged in
               gestureEnabled: false,
             }}
           />
-          <Stack.Screen
-            name="(auth)/signup"
-            options={{
-              headerShown: false,
-            }}
-          />
 
-          {/* Main App Group */}
+          {/* Protected Routes - Only accessible after login */}
           <Stack.Screen
             name="(tabs)"
             options={{
               headerShown: false,
+              // Prevent going back to login screen
+              gestureEnabled: false,
             }}
           />
 
