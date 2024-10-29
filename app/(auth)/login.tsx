@@ -28,26 +28,19 @@ const LoginPage = () => {
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    // Email validation
+  
     if (!email.trim()) {
       newErrors.email = "";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = "Please enter a valid email address";
     }
 
-    // Password validation
+  
     if (!password) {
       newErrors.password = "";
     } else if (password.length < 6) {
       newErrors.password = "Password must be at least 6 characters long";}
-    // } else if (
-    //   !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(
-    //     password
-    //   )
-    // ) {
-    //   newErrors.password =
-    //     "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character";
-    // }
+
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -57,7 +50,7 @@ const LoginPage = () => {
       setLoading(true);
       console.log(email, "and", password);
       try {
-        const response = await axios.post("/auth/login", {
+        const response = await axios.post("http://localhost:8000/auth/login", {
           email,
           password,
         });
@@ -74,17 +67,23 @@ const LoginPage = () => {
         } else {
           Alert.alert("Login Failed", data.message || "Invalid credentials");
         }
-      } catch (error) {
-        if (error instanceof Error) {
-          Alert.alert(
-            "Error",
-            error.message || "Something went wrong. Please try again."
-          );
-        } else {
-          Alert.alert("Error", "An unknown error occurred. Please try again.");
-        }
-        console.log("error", error);
-      } finally {
+    } catch (error) {
+  if (axios.isAxiosError(error) && !error.response) {
+    Alert.alert(
+      "Network Error",
+      "Unable to connect to the server. Please check your internet connection and try again."
+    );
+     router.push("(tabs)");
+  } else if (error instanceof Error) {
+    Alert.alert(
+      "Error",
+      error.message || "Something went wrong. Please try again."
+    );
+  } else {
+    Alert.alert("Error", "An unknown error occurred. Please try again.");
+  }
+  console.log("error", error);
+}finally {
         setLoading(false);
       }
     }
@@ -185,7 +184,7 @@ const LoginPage = () => {
 
           <Text style={styles.createAccountText}>
             Don't have an account?{" "}
-            <TouchableOpacity onPress={() => router.push("/pages/signup")}>
+            <TouchableOpacity onPress={() => router.push("/signup")}>
               
               <Text style={styles.createAccountLink}>Create New Account</Text>
             </TouchableOpacity>
