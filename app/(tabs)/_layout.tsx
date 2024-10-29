@@ -20,7 +20,7 @@ export default function TabLayout() {
   };
 
   // Handle authentication check at the layout level
-  if (isAuthenticated) {
+  if (!isAuthenticated) {
     return <Redirect href="/(auth)/login" />;
   }
 
